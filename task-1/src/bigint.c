@@ -38,15 +38,15 @@ static int dec_truncate(dec_t a) {
         return -EINVAL;
 
     size_t leading_zeros = 0;
-    while(a->digits[a->length - leading_zeros - 1] && leading_zeros < a->length == 0)
+    while(a->digits[a->length - leading_zeros - 1] == 0 && leading_zeros < a->length)
         leading_zeros++;
 
     if (leading_zeros == 0)
         return 0;
 
     size_t new_length = max(a->length - leading_zeros, 1);
-    a->digits = realloc(a->digits, new_length);
-    if (a->digits)
+    a->digits = realloc(a->digits, new_length * sizeof(int8_t));
+    if (a->digits == NULL)
         return -ENOMEM;
     a->length = new_length;
 
