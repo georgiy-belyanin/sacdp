@@ -28,7 +28,7 @@ static dec_t create_dec(size_t length, enum sign sign) {
     return result;
 }
 
-dec_t destroy_dec(dec_t a) {
+void destroy_dec(dec_t a) {
     free(a->digits);
     free(a);
 }

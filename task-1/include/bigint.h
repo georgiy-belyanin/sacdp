@@ -6,6 +6,8 @@ struct dec;
 typedef struct dec *dec_t;
 typedef const struct dec *cdec_t;
 
+void destroy_dec(dec_t dec);
+
 dec_t dec_from_string(const char* string);
 dec_t dec_from_int(int64_t value);
 
