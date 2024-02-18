@@ -59,6 +59,7 @@ static int dec_extend(dec_t a, size_t n) {
     a->digits = realloc(a->digits, a->length + n);
     if (a->digits == NULL)
         return -ENOMEM;
+    a->length += n;
 
     return 0;
 }
