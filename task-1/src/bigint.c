@@ -63,6 +63,7 @@ static int dec_extend(dec_t a, size_t n) {
     return 0;
 }
 
+#if (BASE == 10)
 dec_t dec_from_string(const char* s) {
     if (s == NULL)
         return NULL;
@@ -84,12 +85,20 @@ dec_t dec_from_string(const char* s) {
     dec_truncate(result);
     return result;
 }
+#else
+#warning dec_from_string() unimplemented
+
+dec_t dec_from_string(const char* s) {
+    return NULL;
+}
+#endif
+
 dec_t dec_from_int(int64_t value) {
     dec_t result = create_dec(20, value < 0);
     
     int i = 0;
-    for (value = llabs(value); value > 0; value /= 10) {
-        result->digits[i++] = value % 10;
+    for (value = llabs(value); value > 0; value /= BASE) {
+        result->digits[i++] = value % BASE;
     }
 
     dec_truncate(result);
