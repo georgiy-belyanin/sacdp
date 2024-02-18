@@ -130,3 +130,50 @@ char *dec_to_string(cdec_t a) {
     return result;
 }
 
+dec_t dec_add(cdec_t a, cdec_t b) {
+    if (a == NULL || b == NULL)
+        return NULL;
+
+    size_t max_length = max(a->length, b->length);
+    dec_t result = create_dec(max_length, a->sign);
+
+    if (result == NULL)
+        return NULL;
+
+    if (a->sign != b->sign) {
+        for (size_t i = 0; i < max_length; i++) {
+            int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
+            int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
+
+            result->digits[i] += a_digit - b_digit;
+            if (result->digits[i] < 0) {
+                result->digits[i] += 10;
+
+                if (i != max_length - 1)
+                    result->digits[i+1]--;
+                else
+                    result->sign = 1 - result->sign;
+            }
+        }
+        dec_truncate(result);
+    } else {
+        result->sign = a->sign;
+        for (size_t i = 0; i < max_length; i++) {
+            int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
+            int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
+
+            result->digits[i] += a_digit + b_digit;
+            if (result->digits[i] >= BASE) {
+                result->digits[i] %= BASE;
+
+                if (i == max_length - 1)
+                    if (dec_extend(result, 1) < 0)
+                        return NULL;
+                result->digits[i+1]++;
+            }
+        }
+    }
+
+    return result;
+}
+

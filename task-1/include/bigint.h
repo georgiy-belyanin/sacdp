@@ -13,3 +13,5 @@ dec_t dec_from_int(int64_t value);
 
 char *dec_to_string();
 
+dec_t dec_add(cdec_t a, cdec_t b);
+

@@ -1,6 +1,7 @@
 #include "bigint.h"
 
 #include <string.h>
+#include <stdlib.h>
 #include "cut.h"
 
 TEST(bigint, to_from_string) {
@@ -42,9 +43,45 @@ TEST(bigint, to_from_string) {
     destroy_dec(f);
     free(fs);
 }
+TEST(bigint, add) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t c = dec_from_string("333333333333333333333333333");
+    dec_t d = dec_from_string("-333333333333333333333333333");
+    dec_t e = dec_from_string("0");
+    dec_t f = dec_add(a, c);
+    dec_t g = dec_add(a, b);
+    dec_t h = dec_add(d, b);
+    dec_t i = dec_add(a, e);
+
+    char *fs = dec_to_string(f);
+    char *gs = dec_to_string(g);
+    char *hs = dec_to_string(h);
+    char *is = dec_to_string(i);
+
+    check(!strcmp(fs, "456790122456790122456790122"));
+    check(!strcmp(gs, "0"));
+    check(!strcmp(hs, "-456790122456790122456790122"));
+    check(!strcmp(is, "123456789123456789123456789"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+    destroy_dec(g);
+    destroy_dec(h);
+    destroy_dec(i);
+    free(fs);
+    free(gs);
+    free(hs);
+    free(is);
+}
 
 TESTS(bigint) {
     test_run(bigint, to_from_string);
+    test_run(bigint, add);
 }
 
 int main() {
