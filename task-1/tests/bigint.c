@@ -78,10 +78,41 @@ TEST(bigint, add) {
     free(hs);
     free(is);
 }
+TEST(bigint, sub) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t c = dec_from_string("333333333333333333333333333");
+    dec_t d = dec_from_string("-333333333333333333333333333");
+    dec_t e = dec_from_string("123456789123456789123456789");
+    dec_t f = dec_sub(a, d);
+    dec_t g = dec_sub(b, c);
+    dec_t h = dec_sub(a, e);
+
+    char *fs = dec_to_string(f);
+    char *gs = dec_to_string(g);
+    char *hs = dec_to_string(h);
+
+    check(!strcmp(fs, "456790122456790122456790122"));
+    check(!strcmp(gs, "-456790122456790122456790122"));
+    check(!strcmp(hs, "0"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+    destroy_dec(g);
+    destroy_dec(h);
+    free(fs);
+    free(gs);
+    free(hs);
+}
 
 TESTS(bigint) {
     test_run(bigint, to_from_string);
     test_run(bigint, add);
+    test_run(bigint, sub);
 }
 
 int main() {

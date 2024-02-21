@@ -63,6 +63,12 @@ static int dec_extend(dec_t a, size_t n) {
 
     return 0;
 }
+static dec_t dec_copy(cdec_t a) {
+    dec_t result = create_dec(a->length, a->sign);
+    for (size_t i = 0; i < a->length; i++)
+        result->digits[i] = a->digits[i];
+    return result;
+}
 
 #if (BASE == 10)
 dec_t dec_from_string(const char* s) {
@@ -174,6 +180,21 @@ dec_t dec_add(cdec_t a, cdec_t b) {
         }
     }
 
+    return result;
+}
+
+dec_t dec_sub(cdec_t a, cdec_t b) {
+    if (a == NULL || b == NULL)
+        return NULL;
+
+    dec_t neg_b = dec_copy(b);
+    neg_b->sign = 1 - neg_b->sign;
+
+    dec_t result = dec_add(a, neg_b);
+    if (result == NULL)
+        return NULL;
+
+    destroy_dec(neg_b);
     return result;
 }
 
