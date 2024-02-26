@@ -117,13 +117,13 @@ char *dec_to_string(cdec_t a) {
         return NULL;
 
     if (a->length == 1 && a->digits[0] == 0) {
-        char *result = calloc(1, sizeof(char));
+        char *result = calloc(2, sizeof(char));
         result[0] = '0';
         return result;
     }
 
     size_t len = a->length + a->sign;
-    char *result = calloc(len, sizeof(char));
+    char *result = calloc(len + 1, sizeof(char));
     if (result == NULL)
         return NULL;
 
