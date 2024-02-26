@@ -153,11 +153,52 @@ TEST(bigint, mul) {
     return 0;
 }
 
+dec_t fib(size_t n) {
+    dec_t *temp = calloc(n + 3, sizeof(dec_t));
+    temp[0] = dec_from_int(0);
+    temp[1] = dec_from_int(1);
+    for (size_t i = 2; i <= n; i++)
+        temp[i] = dec_add(temp[i - 1], temp[i - 2]);
+    for (size_t i = 0; i < n; i++)
+        destroy_dec(temp[i]);
+    dec_t result = temp[n];
+    free(temp);
+    return result;
+}
+TEST(bigint, fib) {
+    dec_t a = fib(1);
+    dec_t b = fib(2);
+    dec_t c = fib(10);
+    dec_t d = fib(100);
+
+    char *as = dec_to_string(a);
+    char *bs = dec_to_string(b);
+    char *cs = dec_to_string(c);
+    char *ds = dec_to_string(d);
+
+    check(!strcmp(as, "1"));
+    check(!strcmp(bs, "1"));
+    check(!strcmp(cs, "55"));
+    check(!strcmp(ds, "354224848179261915075"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    free(as);
+    free(bs);
+    free(cs);
+    free(ds);
+
+    return 0;
+}
+
 TESTS(bigint) {
     test_run(bigint, to_from_string);
     test_run(bigint, add);
     test_run(bigint, sub);
     test_run(bigint, mul);
+    test_run(bigint, fib);
 }
 
 int main() {
