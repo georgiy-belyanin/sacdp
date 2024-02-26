@@ -38,7 +38,7 @@ static int dec_truncate(dec_t a) {
         return -EINVAL;
 
     size_t leading_zeros = 0;
-    while(a->digits[a->length - leading_zeros - 1] == 0 && leading_zeros < a->length)
+    while(leading_zeros < a->length && a->digits[a->length - leading_zeros - 1] == 0)
         leading_zeros++;
 
     if (leading_zeros == 0)
