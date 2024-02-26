@@ -42,6 +42,8 @@ TEST(bigint, to_from_string) {
     free(es);
     destroy_dec(f);
     free(fs);
+
+    return 0;
 }
 TEST(bigint, add) {
     dec_t a = dec_from_string("123456789123456789123456789");
@@ -77,7 +79,10 @@ TEST(bigint, add) {
     free(gs);
     free(hs);
     free(is);
+
+    return 0;
 }
+
 TEST(bigint, sub) {
     dec_t a = dec_from_string("123456789123456789123456789");
     dec_t b = dec_from_string("-123456789123456789123456789");
@@ -107,6 +112,8 @@ TEST(bigint, sub) {
     free(fs);
     free(gs);
     free(hs);
+
+    return 0;
 }
 TEST(bigint, mul) {
     dec_t a = dec_from_string("123456789123456789123456789");
@@ -142,6 +149,8 @@ TEST(bigint, mul) {
     free(gs);
     free(hs);
     free(is);
+
+    return 0;
 }
 
 TESTS(bigint) {
