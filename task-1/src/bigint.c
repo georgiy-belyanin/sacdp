@@ -198,3 +198,30 @@ dec_t dec_sub(cdec_t a, cdec_t b) {
     return result;
 }
 
+dec_t dec_mul(cdec_t a, cdec_t b) {
+    if (a == NULL || b == NULL)
+        return NULL;
+
+    size_t length = a->length + b->length;
+    dec_t result = create_dec(length, (a->sign + b->sign) % 2);
+
+    if (result == NULL)
+        return NULL;
+
+    for (size_t i = 0; i < b->length; i++) {
+        int8_t b_digit = b->digits[i];
+        for (size_t j = 0; j < a->length; j++) {
+            int8_t a_digit = a->digits[i];
+
+            result->digits[i + j] += a_digit * b_digit;
+            if (result->digits[i + j] >= 10) {
+                result->digits[i + j + 1] += result->digits[i + j] / 10;
+                result->digits[i + j] %= 10;
+            }
+        }
+    }
+    dec_truncate(result);
+
+    return result;
+}
+

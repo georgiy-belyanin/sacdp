@@ -108,11 +108,47 @@ TEST(bigint, sub) {
     free(gs);
     free(hs);
 }
+TEST(bigint, mul) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t c = dec_from_string("333333333333333333333333333");
+    dec_t d = dec_from_string("-333333333333333333333333333");
+    dec_t e = dec_from_string("0");
+    dec_t f = dec_mul(a, c);
+    dec_t g = dec_mul(a, d);
+    dec_t h = dec_mul(a, e);
+    dec_t i = dec_mul(b, d);
+
+    char *fs = dec_to_string(f);
+    char *gs = dec_to_string(g);
+    char *hs = dec_to_string(h);
+    char *is = dec_to_string(i);
+
+    check(!strcmp(fs, "41152263041152263041152262958847736958847736958847737"));
+    check(!strcmp(gs, "-41152263041152263041152262958847736958847736958847737"));
+    check(!strcmp(hs, "0"));
+    check(!strcmp(is, "41152263041152263041152262958847736958847736958847737"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+    destroy_dec(g);
+    destroy_dec(h);
+    destroy_dec(i);
+    free(fs);
+    free(gs);
+    free(hs);
+    free(is);
+}
 
 TESTS(bigint) {
     test_run(bigint, to_from_string);
     test_run(bigint, add);
     test_run(bigint, sub);
+    test_run(bigint, mul);
 }
 
 int main() {
