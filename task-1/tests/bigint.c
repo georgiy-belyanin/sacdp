@@ -260,6 +260,36 @@ dec_t fac(size_t n) {
     destroy_dec(b);
     return result;
 }
+dec_t euc(cdec_t a, cdec_t b) {
+    dec_t zero = dec_from_int(0);
+    if (dec_cmp(a, zero) == 0) {
+        destroy_dec(zero);
+        return dec_copy(b);
+    } else if (dec_cmp(b, zero) == 0) {
+        destroy_dec(zero);
+        return dec_copy(a);
+    }
+    destroy_dec(zero);
+
+    int8_t cmp = dec_cmp(a, b);
+    if (cmp == 1) {
+        dec_t r;
+        dec_t c = dec_div(a, b, &r);
+        destroy_dec(c);
+        dec_t result = euc(r, b);
+        destroy_dec(r);
+        return result;
+    } else if (cmp == -1) {
+        dec_t r;
+        dec_t c = dec_div(b, a, &r);
+        destroy_dec(c);
+        dec_t result = euc(r, a);
+        destroy_dec(r);
+        return result;
+    } else {
+        return dec_copy(a);
+    }
+}
 TEST(bigint, fib) {
     dec_t a = fib(1);
     dec_t b = fib(2);
@@ -316,19 +346,34 @@ TEST(bigint, fac) {
 }
 TEST(bigint, euc) {
     dec_t a = dec_from_string("123456789123456789123456789");
-    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t b = dec_from_string("7");
     dec_t c = dec_from_string("333333333333333333333333333");
-    dec_t d = dec_from_string("-333333333333333333333333333");
-    dec_t e = dec_from_string("0");
-    dec_t f = dec_from_string("-0");
+    dec_t d = dec_from_string("3055226168111655637560126414086140721666308321352217707326012376644322994342882916399289316897113845");
+    dec_t e = dec_from_string("7036420146916556032731470518270036236016957588191783967261853431201878204048778528737031671137311690");
 
+    dec_t g = euc(a, c);
+    dec_t h = euc(c, b);
+    dec_t i = euc(d, e);
+
+    char *gs = dec_to_string(g);
+    char *hs = dec_to_string(h);
+    char *is = dec_to_string(i);
+
+    check(!strcmp(gs, "9000000009000000009"));
+    check(!strcmp(hs, "1"));
+    check(!strcmp(is, "5"));
 
     destroy_dec(a);
     destroy_dec(b);
     destroy_dec(c);
     destroy_dec(d);
     destroy_dec(e);
-    destroy_dec(f);
+    destroy_dec(g);
+    destroy_dec(h);
+    destroy_dec(i);
+    free(gs);
+    free(hs);
+    free(is);
 
     return 0;
 }
@@ -342,6 +387,7 @@ TESTS(bigint) {
     test_run(bigint, cmp);
     test_run(bigint, fib);
     test_run(bigint, fac);
+    test_run(bigint, euc);
 }
 
 int main() {

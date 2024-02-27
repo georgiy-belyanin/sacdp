@@ -108,7 +108,7 @@ dec_t dec_from_string(const char* s) {
 
 dec_t dec_from_int(int64_t value) {
     dec_t result = create_dec(20, value < 0);
-    
+
     int i = 0;
     for (value = llabs(value); value > 0; value /= BASE) {
         result->digits[i++] = value % BASE;
