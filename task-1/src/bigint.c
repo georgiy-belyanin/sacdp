@@ -217,7 +217,7 @@ dec_t dec_mul(cdec_t a, cdec_t b) {
     for (size_t i = 0; i < b->length; i++) {
         int8_t b_digit = b->digits[i];
         for (size_t j = 0; j < a->length; j++) {
-            int8_t a_digit = a->digits[i];
+            int8_t a_digit = a->digits[j];
 
             result->digits[i + j] += a_digit * b_digit;
             if (result->digits[i + j] >= 10) {
