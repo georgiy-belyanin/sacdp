@@ -10,7 +10,7 @@
 #define BASE 10
 
 #define dec_sign_mul(a, b) (((a) + (b)) % 2)
-#define dec_sign_to_mul(a) ((a) * 2 - 1)
+#define dec_sign_to_mul(a) (-(a) * 2 + 1)
 
 enum sign {
     PLUS = 0,
@@ -239,16 +239,17 @@ int8_t dec_cmp(cdec_t a, cdec_t b) {
     else if (b->sign > a->sign)
         return 1;
     else if (a->length > b->length)
-        return 1 * (a->sign * 2 - 1);
+        return 1 * dec_sign_to_mul(a->sign);
     else if (b->length > a->length)
-        return -1 * (a->sign * 2 - 1);
+        return -1 * dec_sign_to_mul(a->sign);
     else {
         for (int32_t i = a->length - 1; i >= 0; i--) {
             if (a->digits[i] < b->digits[i])
-                return 1 * dec_sign_to_mul(a->sign);
-            else if (b->digits[i] < a->digits[i])
                 return -1 * dec_sign_to_mul(a->sign);
+            else if (b->digits[i] < a->digits[i])
+                return 1 * dec_sign_to_mul(a->sign);
         }
         return 0;
     }
 }
+
