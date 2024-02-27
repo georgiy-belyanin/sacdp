@@ -193,6 +193,16 @@ dec_t fib(size_t n) {
     free(temp);
     return result;
 }
+dec_t fac(size_t n) {
+    if (n == 0)
+        return dec_from_int(1);
+    dec_t a = fac(n - 1);
+    dec_t b = dec_from_int(n);
+    dec_t result = dec_mul(a, b);
+    destroy_dec(a);
+    destroy_dec(b);
+    return result;
+}
 TEST(bigint, fib) {
     dec_t a = fib(1);
     dec_t b = fib(2);
@@ -220,6 +230,33 @@ TEST(bigint, fib) {
 
     return 0;
 }
+TEST(bigint, fac) {
+    dec_t a = fac(1);
+    dec_t b = fac(2);
+    dec_t c = fac(10);
+    dec_t d = fac(100);
+
+    char *as = dec_to_string(a);
+    char *bs = dec_to_string(b);
+    char *cs = dec_to_string(c);
+    char *ds = dec_to_string(d);
+
+    check(!strcmp(as, "1"));
+    check(!strcmp(bs, "2"));
+    check(!strcmp(cs, "3628800"));
+    check(!strcmp(ds, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    free(as);
+    free(bs);
+    free(cs);
+    free(ds);
+
+    return 0;
+}
 
 TESTS(bigint) {
     test_run(bigint, to_from_string);
@@ -228,6 +265,7 @@ TESTS(bigint) {
     test_run(bigint, mul);
     test_run(bigint, cmp);
     test_run(bigint, fib);
+    test_run(bigint, fac);
 }
 
 int main() {
