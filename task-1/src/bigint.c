@@ -9,6 +9,9 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define BASE 10
 
+#define dec_sign_mul(a, b) (((a) + (b)) % 2)
+#define dec_sign_to_mul(a) ((a) * 2 - 1)
+
 enum sign {
     PLUS = 0,
     MINUS = 1
@@ -206,7 +209,7 @@ dec_t dec_mul(cdec_t a, cdec_t b) {
         return NULL;
 
     size_t length = a->length + b->length;
-    dec_t result = create_dec(length, (a->sign + b->sign) % 2);
+    dec_t result = create_dec(length, dec_sign_mul(a->sign, b->sign));
 
     if (result == NULL)
         return NULL;
@@ -242,9 +245,9 @@ int8_t dec_cmp(cdec_t a, cdec_t b) {
     else {
         for (int32_t i = a->length - 1; i >= 0; i--) {
             if (a->digits[i] < b->digits[i])
-                return 1 * (a->sign * 2 - 1);
+                return 1 * dec_sign_to_mul(a->sign);
             else if (b->digits[i] < a->digits[i])
-                return -1 * (a->sign * 2 - 1);
+                return -1 * dec_sign_to_mul(a->sign);
         }
         return 0;
     }
