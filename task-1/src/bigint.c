@@ -228,3 +228,24 @@ dec_t dec_mul(cdec_t a, cdec_t b) {
     return result;
 }
 
+int8_t dec_cmp(cdec_t a, cdec_t b) {
+    if (a->length == 1 && b->length == 1 && a->digits[0] == 0 && b->digits[0] == 0)
+        return 0;
+    else if (a->sign > b->sign)
+        return -1;
+    else if (b->sign > a->sign)
+        return 1;
+    else if (a->length > b->length)
+        return 1 * (a->sign * 2 - 1);
+    else if (b->length > a->length)
+        return -1 * (a->sign * 2 - 1);
+    else {
+        for (int32_t i = a->length - 1; i >= 0; i--) {
+            if (a->digits[i] < b->digits[i])
+                return 1 * (a->sign * 2 - 1);
+            else if (b->digits[i] < a->digits[i])
+                return -1 * (a->sign * 2 - 1);
+        }
+        return 0;
+    }
+}

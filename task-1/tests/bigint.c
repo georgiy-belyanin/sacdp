@@ -153,6 +153,34 @@ TEST(bigint, mul) {
     return 0;
 }
 
+TEST(bigint, cmp) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t c = dec_from_string("333333333333333333333333333");
+    dec_t d = dec_from_string("-333333333333333333333333333");
+    dec_t e = dec_from_string("0");
+    dec_t f = dec_from_string("-0");
+
+    check(dec_cmp(a, a) == 0);
+    check(dec_cmp(a, b) == 1);
+    check(dec_cmp(b, a) == -1);
+    check(dec_cmp(e, f) == 0);
+    check(dec_cmp(f, e) == 0);
+    check(dec_cmp(a, c) == -1);
+    check(dec_cmp(c, a) == 1);
+    check(dec_cmp(b, d) == 1);
+    check(dec_cmp(d, b) == -1);
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+
+    return 0;
+}
+
 dec_t fib(size_t n) {
     dec_t *temp = calloc(n + 3, sizeof(dec_t));
     temp[0] = dec_from_int(0);
@@ -198,6 +226,7 @@ TESTS(bigint) {
     test_run(bigint, add);
     test_run(bigint, sub);
     test_run(bigint, mul);
+    test_run(bigint, cmp);
     test_run(bigint, fib);
 }
 

@@ -17,3 +17,5 @@ dec_t dec_add(cdec_t a, cdec_t b);
 dec_t dec_sub(cdec_t a, cdec_t b);
 dec_t dec_mul(cdec_t a, cdec_t b);
 
+int8_t dec_cmp(cdec_t a, cdec_t b);
+
