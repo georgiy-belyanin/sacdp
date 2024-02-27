@@ -69,7 +69,7 @@ static int dec_extend(dec_t a, size_t n) {
 
     return 0;
 }
-static dec_t dec_copy(cdec_t a) {
+dec_t dec_copy(cdec_t a) {
     dec_t result = create_dec(a->length, a->sign);
     for (size_t i = 0; i < a->length; i++)
         result->digits[i] = a->digits[i];
@@ -251,5 +251,92 @@ int8_t dec_cmp(cdec_t a, cdec_t b) {
         }
         return 0;
     }
+}
+
+static dec_t dec_shift(cdec_t a, size_t n) {
+    dec_t result = create_dec(a->length + n, a->sign);
+    if (result == NULL)
+        return NULL;
+
+    for (size_t i = 0; i < a->length; i++)
+        result->digits[i + n] = a->digits[i];
+
+    return result;
+}
+dec_t dec_div(cdec_t a, cdec_t b, dec_t* rem) {
+    if (a == NULL || b == NULL)
+        return NULL;
+
+    if (b->length == 1 && b->digits[0] == 0)
+        return NULL;
+
+    size_t length = a->length - b->length + 2;
+    dec_t result = create_dec(length, PLUS);
+    if (result == NULL)
+        return NULL;
+    dec_t ac = dec_copy(a);
+    ac->sign = PLUS;
+    if (ac == NULL) {
+        destroy_dec(result);
+        return NULL;
+    }
+
+    for (int32_t i = a->length - b->length; i >= 0; i--) {
+        dec_t tmp = dec_shift(b, i);
+        tmp->sign = PLUS;
+
+        while (dec_cmp(ac, tmp) != -1) {
+            dec_t an = dec_sub(ac, tmp);
+            destroy_dec(ac);
+            ac = an;
+            result->digits[i]++;
+        }
+
+        destroy_dec(tmp);
+    }
+
+    if (a->sign != b->sign && !(ac->length == 1 && ac->digits[0] == 0)) {
+        ac->sign = MINUS;
+        dec_t bc = dec_copy(b);
+        if (bc == NULL) {
+            destroy_dec(ac);
+            destroy_dec(result);
+            return NULL;
+        }
+        bc->sign = PLUS;
+
+        dec_t acn = dec_add(bc, ac);
+        if (acn == NULL) {
+            destroy_dec(ac);
+            destroy_dec(bc);
+            destroy_dec(result);
+            return NULL;
+        }
+
+        destroy_dec(ac);
+        destroy_dec(bc);
+        ac = acn;
+
+        dec_t unit = dec_from_int(1);
+        dec_t resultn = dec_add(result, unit);
+        if (resultn == NULL) {
+            destroy_dec(ac);
+            destroy_dec(result);
+            return NULL;
+        }
+        destroy_dec(result);
+        result = resultn;
+
+        destroy_dec(unit);
+    }
+    result->sign = dec_sign_mul(a->sign, b->sign);
+    ac->sign = b->sign;
+    if (rem != NULL)
+        *rem = ac;
+    else
+        destroy_dec(ac);
+    dec_truncate(result);
+
+    return result;
 }
 

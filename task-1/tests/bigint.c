@@ -152,6 +152,63 @@ TEST(bigint, mul) {
 
     return 0;
 }
+TEST(bigint, div) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456788");
+    dec_t c = dec_from_string("3333333333333333333333333333");
+    dec_t d = dec_from_string("-3333333333333333333333333333");
+    dec_t e = dec_from_string("27");
+    dec_t f;
+    dec_t g;
+    dec_t h;
+    dec_t i;
+    dec_t j = dec_div(a, a, &f);
+    dec_t k = dec_div(a, b, &g);
+    dec_t l = dec_div(c, a, &h);
+    dec_t m = dec_div(d, b, &i);
+
+    char *fs = dec_to_string(f);
+    char *gs = dec_to_string(g);
+    char *hs = dec_to_string(h);
+    char *is = dec_to_string(i);
+    char *js = dec_to_string(j);
+    char *ks = dec_to_string(k);
+    char *ls = dec_to_string(l);
+    char *ms = dec_to_string(m);
+
+    check(!strcmp(fs, "0"));
+    check(!strcmp(gs, "-123456789123456789123456787"));
+    check(!strcmp(hs, "27000000027000000030"));
+    check(!strcmp(is, "-27000000027000000057"));
+    check(!strcmp(js, "1"));
+    check(!strcmp(ks, "-2"));
+    check(!strcmp(ls, "27"));
+    check(!strcmp(ms, "27"));
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+    destroy_dec(g);
+    destroy_dec(h);
+    destroy_dec(i);
+    destroy_dec(j);
+    destroy_dec(k);
+    destroy_dec(l);
+    destroy_dec(m);
+    free(fs);
+    free(gs);
+    free(hs);
+    free(is);
+    free(js);
+    free(ks);
+    free(ls);
+    free(ms);
+
+    return 0;
+}
 
 TEST(bigint, cmp) {
     dec_t a = dec_from_string("123456789123456789123456789");
@@ -257,12 +314,31 @@ TEST(bigint, fac) {
 
     return 0;
 }
+TEST(bigint, euc) {
+    dec_t a = dec_from_string("123456789123456789123456789");
+    dec_t b = dec_from_string("-123456789123456789123456789");
+    dec_t c = dec_from_string("333333333333333333333333333");
+    dec_t d = dec_from_string("-333333333333333333333333333");
+    dec_t e = dec_from_string("0");
+    dec_t f = dec_from_string("-0");
+
+
+    destroy_dec(a);
+    destroy_dec(b);
+    destroy_dec(c);
+    destroy_dec(d);
+    destroy_dec(e);
+    destroy_dec(f);
+
+    return 0;
+}
 
 TESTS(bigint) {
     test_run(bigint, to_from_string);
     test_run(bigint, add);
     test_run(bigint, sub);
     test_run(bigint, mul);
+    test_run(bigint, div);
     test_run(bigint, cmp);
     test_run(bigint, fib);
     test_run(bigint, fac);
