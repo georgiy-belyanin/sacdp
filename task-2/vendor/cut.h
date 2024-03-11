@@ -41,7 +41,7 @@ int _cut_failed = 0;
 #define tests_info() \
   do { \
     _cut_printf("Executed %d tests: %d success, %d failed\n", _cut_ok + _cut_failed, _cut_ok, _cut_failed); \
-    exit(_cut_failed == 0); \
+    exit(_cut_failed != 0); \
   } while(0)
 
 #endif
