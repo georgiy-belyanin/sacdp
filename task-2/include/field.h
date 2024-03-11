@@ -12,3 +12,10 @@ typedef const struct f *cf_t;
 fq_t create_fq(uint8_t ch, size_t n, const uint8_t *p);
 int destroy_fq(fq_t a);
 
+f_t fq_get_zero(cfq_t a);
+f_t fq_get_identity(cfq_t a);
+f_t fq_get_from_array(cfq_t a, const uint8_t *p);
+
+f_t create_f(cfq_t fq);
+int destroy_f(f_t a);
+
