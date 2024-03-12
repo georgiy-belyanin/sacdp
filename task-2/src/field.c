@@ -12,6 +12,7 @@ struct fq {
 
 fq_t create_fq(uint8_t ch, size_t n, const uint8_t *p) {
     fq_t result = malloc(sizeof(struct fq));
+    if (result == NULL) return NULL;
 
     result->ch = ch;
     result->n = n;
@@ -34,9 +35,18 @@ struct f {
 };
 
 f_t create_f(cfq_t fq) {
+    if (fq == NULL) return NULL;
+
     f_t result = malloc(sizeof(struct f));
+    if (result == NULL) return NULL;
+
     result->fq = fq;
     result->digits = calloc(fq->n, sizeof(uint8_t));
+    if (result->digits == NULL) {
+        free(result);
+        return NULL;
+    }
+
     return result;
 }
 int destroy_f(f_t a) {
@@ -65,6 +75,7 @@ f_t fq_get_identity(cfq_t a) {
     if (a == NULL) return NULL;
 
     f_t result = create_f(a);
+    if (result == NULL) return NULL;
     result->digits[0] = 1;
 
     return result;
