@@ -91,3 +91,17 @@ int f_eq(cf_t a, cf_t b) {
     return 1;
 }
 
+f_t f_add(cf_t a, cf_t b) {
+    if (a == NULL) return NULL;
+    if (b == NULL) return NULL;
+    if (!f_same_fq(a, b)) return NULL;
+
+    cfq_t fq = a->fq;
+    f_t result = create_f(fq);
+    if (result == NULL) return NULL;
+    for (size_t i = 0; i < fq->n; i++)
+        result->digits[i] = (a->digits[i] + b->digits[i]) % fq->ch;
+
+    return result;
+}
+
