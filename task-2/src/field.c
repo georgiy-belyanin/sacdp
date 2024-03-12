@@ -1,6 +1,7 @@
 #include <field.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,6 +91,19 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p) {
         result->digits[i] = p[i];
 
     return result;
+}
+
+int f_print(cf_t a) {
+    if (a == NULL) return -1;
+
+    cfq_t fq = a->fq;
+    for (int32_t i = fq->n - 1; i >= 0; i--) {
+        printf("%dx^%d", a->digits[i], i);
+        if (i != 0) printf(" + ");
+    }
+    printf("\n");
+
+    return 0;
 }
 
 int f_eq(cf_t a, cf_t b) {
