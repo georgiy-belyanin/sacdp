@@ -59,6 +59,19 @@ int destroy_f(f_t a) {
     return 0;
 }
 
+static f_t f_copy(cf_t f) {
+    if (f == NULL) return NULL;
+
+    cfq_t fq = f->fq;
+    f_t result = create_f(fq);
+    if (result == NULL) return NULL;
+
+    for (size_t i = 0; i < fq->n; i++)
+        result->digits[i] = f->digits[i];
+
+    return result;
+}
+
 static bool f_same_fq(cf_t a, cf_t b) {
     if (a == NULL) return false;
     if (b == NULL) return false;
@@ -167,3 +180,73 @@ f_t f_mul(cf_t a, cf_t b) {
     return result;
 }
 
+static uint64_t uint_pow(uint64_t base, uint64_t exp) {
+    uint64_t result = 1;
+    while (exp) {
+        if (exp % 2 == 1) {
+            result *= base;
+            exp--;
+        } else {
+            exp /= 2;
+            base *= base;
+        }
+    }
+    return result;
+}
+
+static f_t f_pow(cf_t a, uint64_t exp) {
+    cfq_t fq = a->fq;
+    f_t result = fq_get_identity(fq);
+    f_t base = f_copy(a);
+    if (result == NULL) return NULL;
+
+    while (exp) {
+        if (exp % 2 == 1) {
+            f_t resultn = f_mul(result, base);
+            if (resultn == NULL) {
+                destroy_f(result);
+                destroy_f(base);
+                return NULL;
+            }
+            destroy_f(result);
+            result = resultn;
+            exp--;
+        } else {
+            f_t basen = f_mul(base, base);
+            if (basen == NULL) {
+                destroy_f(result);
+                destroy_f(base);
+                return NULL;
+            }
+            destroy_f(base);
+            base = basen;
+            exp /= 2;
+        }
+    }
+    destroy_f(base);
+    return result;
+}
+
+f_t f_inv(cf_t a) {
+    if (a == NULL) return NULL;
+
+    cfq_t fq = a->fq;
+    size_t d = uint_pow(fq->ch, fq->n) - 2;
+    return f_pow(a, d);
+}
+
+f_t f_div(cf_t a, cf_t b) {
+    if (a == NULL) return NULL;
+    if (b == NULL) return NULL;
+
+    f_t b_inv = f_inv(b);
+    if (b_inv == NULL) return NULL;
+    f_t result = f_mul(a, b_inv);
+    if (result == NULL) {
+        destroy_f(b_inv);
+        return NULL;
+    }
+    destroy_f(b_inv);
+
+    return result;
+}
