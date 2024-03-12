@@ -294,6 +294,32 @@ TEST(field, inv) {
     return 0;
 }
 
+TEST(field, f2p8_16_32) {
+    f_t a = f_from_uint8(17);
+    f_t b = f_from_uint16(4353);
+    f_t c = f_from_uint32(69889);
+
+    uint8_t dp[] = {1, 0, 0, 0, 1, 0, 0, 0};
+    f_t d = fq_get_from_array(F2P8, dp);
+    uint8_t ep[] = {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0};
+    f_t e = fq_get_from_array(F2P16, ep);
+    uint8_t fp[] = {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    f_t f = fq_get_from_array(F2P32, fp);
+
+    check(f_eq(a, d));
+    check(f_eq(b, e));
+    check(f_eq(c, f));
+
+    destroy_f(a);
+    destroy_f(b);
+    destroy_f(c);
+    destroy_f(d);
+    destroy_f(e);
+    destroy_f(f);
+
+    return 0;
+}
+
 TESTS(field) {
     test_run(field, create_destroy);
     test_run(field, get_zero);
@@ -302,6 +328,7 @@ TESTS(field) {
     test_run(field, mul);
     test_run(field, div);
     test_run(field, inv);
+    test_run(field, f2p8_16_32);
 }
 
 int main() {

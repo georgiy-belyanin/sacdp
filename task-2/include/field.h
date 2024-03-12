@@ -16,6 +16,14 @@ f_t fq_get_zero(cfq_t a);
 f_t fq_get_identity(cfq_t a);
 f_t fq_get_from_array(cfq_t a, const uint8_t *p);
 
+extern const cfq_t F2P8;
+extern const cfq_t F2P16;
+extern const cfq_t F2P32;
+
+f_t f_from_uint8(uint8_t a);
+f_t f_from_uint16(uint16_t a);
+f_t f_from_uint32(uint32_t a);
+
 f_t create_f(cfq_t fq);
 int destroy_f(f_t a);
 

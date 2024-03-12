@@ -30,6 +30,20 @@ int destroy_fq(fq_t a) {
     return 0;
 }
 
+// Polynomial: x^8 + x^4 + x^3 + x^2 + 1
+static uint8_t _f2p8_p[] = { 1, 0, 1, 1, 1, 0, 0, 0, 1 };
+static struct fq _f2p8 = { 2, 8, _f2p8_p };
+// Polynomial: x^16 + x^12 + x^3 + x^1 + 1
+static uint8_t _f2p16_p[] = { 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 };
+static struct fq _f2p16 = { 2, 16, _f2p16_p };
+// Polynomial: x^32 + x^22 + x^2 + x^1 + 1
+static uint8_t _f2p32_p[] = { 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+static struct fq _f2p32 = { 2, 32, _f2p32_p };
+
+const cfq_t F2P8 = &_f2p8;
+const cfq_t F2P16 = &_f2p16;
+const cfq_t F2P32 = &_f2p32;
+
 struct f {
     cfq_t fq;
     uint8_t *digits;
@@ -103,6 +117,31 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p) {
     for (size_t i = 0; i < a->n; i++)
         result->digits[i] = p[i];
 
+    return result;
+}
+
+f_t f_from_uint8(uint8_t a) {
+    f_t result = create_f(F2P8);
+    for (size_t i = 0; i < 8; i++) {
+        result->digits[i] = a & 1;
+        a >>= 1;
+    }
+    return result;
+}
+f_t f_from_uint16(uint16_t a) {
+    f_t result = create_f(F2P16);
+    for (size_t i = 0; i < 16; i++) {
+        result->digits[i] = a & 1;
+        a >>= 1;
+    }
+    return result;
+}
+f_t f_from_uint32(uint32_t a) {
+    f_t result = create_f(F2P32);
+    for (size_t i = 0; i < 32; i++) {
+        result->digits[i] = a & 1;
+        a >>= 1;
+    }
     return result;
 }
 
