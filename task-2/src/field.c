@@ -85,6 +85,7 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p) {
     if (p == NULL) return NULL;
 
     f_t result = create_f(a);
+    if (result == NULL) return NULL;
     for (size_t i = 0; i < a->n; i++)
         result->digits[i] = p[i];
 
@@ -112,6 +113,42 @@ f_t f_add(cf_t a, cf_t b) {
     if (result == NULL) return NULL;
     for (size_t i = 0; i < fq->n; i++)
         result->digits[i] = (a->digits[i] + b->digits[i]) % fq->ch;
+
+    return result;
+}
+
+f_t f_mul(cf_t a, cf_t b) {
+    if (a == NULL) return NULL;
+    if (b == NULL) return NULL;
+    if (!f_same_fq(a, b)) return NULL;
+
+    cfq_t fq = a->fq;
+
+    uint8_t *digits = calloc(2 * fq->n - 1, sizeof(uint8_t));
+    if (digits == NULL) return NULL;
+
+    f_t result = create_f(fq);
+    if (result == NULL) {
+        free(digits);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < fq->n; i++) {
+        for (size_t j = 0; j < fq->n; j++) {
+            digits[i + j] = (digits[i + j] + a->digits[i] * b->digits[j]) % fq->ch;
+        }
+    }
+
+    for (int32_t i = fq->n - 2; i >= 0; i--) {
+        int8_t mul = digits[fq->n + i];
+        for (int32_t j = fq->n; j >= 0; j--) {
+            int32_t digitn = (digits[i + j] - fq->p[j] * mul) % fq->ch;
+            digits[i + j] = digitn >= 0 ? digitn : digitn + fq->ch;
+        }
+    }
+
+    free(result->digits);
+    result->digits = realloc(digits, fq->n * sizeof(uint8_t));
 
     return result;
 }

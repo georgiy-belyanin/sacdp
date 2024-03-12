@@ -24,3 +24,5 @@ int f_print(cf_t a);
 int f_eq(cf_t a, cf_t b);
 
 f_t f_add(cf_t a, cf_t b);
+f_t f_mul(cf_t a, cf_t b);
+

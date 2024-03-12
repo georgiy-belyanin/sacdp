@@ -143,6 +143,58 @@ TEST(field, add) {
 
     return 0;
 }
+TEST(field, mul) {
+    fq_t a = create_f2p3();
+    fq_t b = create_f7();
+    fq_t c = create_f3p3();
+
+    uint8_t dp[] = {1, 1, 1}; // a^5
+    f_t d = fq_get_from_array(a, dp);
+    uint8_t ep[] = {1, 0, 1}; // a^6
+    f_t e = fq_get_from_array(a, ep);
+    uint8_t fp[] = {0, 1, 1}; // a^4
+    f_t f = fq_get_from_array(a, fp);
+    f_t g = f_mul(d, e);
+
+    uint8_t hp[] = {4};
+    f_t h = fq_get_from_array(b, hp);
+    uint8_t ip[] = {6};
+    f_t i = fq_get_from_array(b, ip);
+    uint8_t jp[] = {3};
+    f_t j = fq_get_from_array(b, jp);
+    f_t k = f_mul(h, i);
+
+    uint8_t lp[] = {2, 0, 2}; // a^8
+    f_t l = fq_get_from_array(c, lp);
+    uint8_t mp[] = {2, 2, 1}; // a^7
+    f_t m = fq_get_from_array(c, mp);
+    uint8_t np[] = {0, 0, 2}; // a^15
+    f_t n = fq_get_from_array(c, np);
+    f_t o = f_mul(l, m);
+
+    check(f_eq(g, f));
+    check(f_eq(k, j));
+    check(f_eq(n, o));
+
+    destroy_f(d);
+    destroy_f(e);
+    destroy_f(f);
+    destroy_f(g);
+    destroy_f(h);
+    destroy_f(i);
+    destroy_f(j);
+    destroy_f(k);
+    destroy_f(l);
+    destroy_f(m);
+    destroy_f(n);
+    destroy_f(o);
+
+    destroy_fq(a);
+    destroy_fq(b);
+    destroy_fq(c);
+
+    return 0;
+}
 
     return 0;
 }
@@ -152,6 +204,7 @@ TESTS(field) {
     test_run(field, get_zero);
     test_run(field, get_identity);
     test_run(field, add);
+    test_run(field, mul);
 }
 
 int main() {
