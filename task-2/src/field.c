@@ -183,6 +183,37 @@ f_t f_add(cf_t a, cf_t b) {
     return result;
 }
 
+f_t f_sub(cf_t a, cf_t b) {
+    if (a == NULL) return NULL;
+    if (b == NULL) return NULL;
+    if (!f_same_fq(a, b)) return NULL;
+
+    f_t b_neg = f_neg(b);
+    if (b_neg == NULL) return NULL;
+    f_t result = f_add(a, b_neg);
+    if (result == NULL) {
+        destroy_f(b_neg);
+        return NULL;
+    }
+    destroy_f(b_neg);
+
+    return result;
+}
+
+f_t f_neg(cf_t a) {
+    if (a == NULL) return NULL;
+
+    cfq_t fq = a->fq;
+    f_t result = create_f(fq);
+    if (result == NULL) return NULL;
+
+    for (size_t i = 0; i < fq->n; i++) {
+        result->digits[i] = (fq->ch - a->digits[i]) % fq->ch;
+    }
+
+    return result;
+}
+
 f_t f_mul(cf_t a, cf_t b) {
     if (a == NULL) return NULL;
     if (b == NULL) return NULL;
