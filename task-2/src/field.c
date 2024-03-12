@@ -80,3 +80,14 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p) {
     return result;
 }
 
+int f_eq(cf_t a, cf_t b) {
+    if (a == NULL) return 0;
+    if (b == NULL) return 0;
+    if (!f_same_fq(a, b)) return 0;
+
+    cfq_t fq = a->fq;
+    for (size_t i = 0; i < fq->n; i++)
+        if (a->digits[i] != b->digits[i]) return 0;
+    return 1;
+}
+

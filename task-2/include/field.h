@@ -19,3 +19,6 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p);
 f_t create_f(cfq_t fq);
 int destroy_f(f_t a);
 
+
+int f_eq(cf_t a, cf_t b);
+
