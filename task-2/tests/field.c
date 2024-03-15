@@ -2,7 +2,7 @@
 #include <field.h>
 #include <stdlib.h>
 
-const uint8_t f2_p[] = {1};
+const uint8_t f2_p[] = {1, 1};
 const uint8_t f2p2_p[] = {1, 1, 1};
 const uint8_t f2p3_p[] = {1, 1, 0, 1};
 const uint8_t f3_p[] = {1, 1};

@@ -14,20 +14,24 @@ struct fq {
 fq_t create_fq(uint8_t ch, size_t n, const uint8_t *p) {
     fq_t result = malloc(sizeof(struct fq));
     if (result == NULL) return NULL;
+    if (p[n] != 1) return NULL;
 
     result->ch = ch;
     result->n = n;
-    result->p = calloc((n + 1), sizeof(uint8_t));
+    result->p = malloc((n + 1) * sizeof(uint8_t));
+    if (result->p == NULL) {
+        free(result);
+        return NULL;
+    }
     memcpy(result->p, p, (n + 1) * sizeof(uint8_t));
 
     return result;
 }
-int destroy_fq(fq_t a) {
-    if (a == NULL) return -1;
+void destroy_fq(fq_t a) {
+    if (a == NULL) return;
 
     free(a->p);
     free(a);
-    return 0;
 }
 
 // Polynomial: x^8 + x^4 + x^3 + x^2 + 1
@@ -49,7 +53,7 @@ struct f {
     uint8_t *digits;
 };
 
-f_t create_f(cfq_t fq) {
+static f_t create_f(cfq_t fq) {
     if (fq == NULL) return NULL;
 
     f_t result = malloc(sizeof(struct f));
@@ -64,13 +68,11 @@ f_t create_f(cfq_t fq) {
 
     return result;
 }
-int destroy_f(f_t a) {
-    if (a == NULL) return -1;
+void destroy_f(f_t a) {
+    if (a == NULL) return;
 
     free(a->digits);
     free(a);
-
-    return 0;
 }
 
 static f_t f_copy(cf_t f) {
@@ -90,7 +92,8 @@ static bool f_same_fq(cf_t a, cf_t b) {
     if (a == NULL) return false;
     if (b == NULL) return false;
 
-    return a->fq->ch == b->fq->ch && a->fq->n == b->fq->n;
+    if (a->fq->ch != b->fq->ch || a->fq->n != b->fq->n) return false;
+    return memcmp(a->fq->p, b->fq->p, a->fq->n + 1) == 0;
 }
 
 f_t fq_get_zero(cfq_t a) {
@@ -122,6 +125,8 @@ f_t fq_get_from_array(cfq_t a, const uint8_t *p) {
 
 f_t f_from_uint8(uint8_t a) {
     f_t result = create_f(F2P8);
+    if (result == NULL) return NULL;
+
     for (size_t i = 0; i < 8; i++) {
         result->digits[i] = a & 1;
         a >>= 1;
@@ -130,6 +135,8 @@ f_t f_from_uint8(uint8_t a) {
 }
 f_t f_from_uint16(uint16_t a) {
     f_t result = create_f(F2P16);
+    if (result == NULL) return NULL;
+
     for (size_t i = 0; i < 16; i++) {
         result->digits[i] = a & 1;
         a >>= 1;
@@ -138,6 +145,8 @@ f_t f_from_uint16(uint16_t a) {
 }
 f_t f_from_uint32(uint32_t a) {
     f_t result = create_f(F2P32);
+    if (result == NULL) return NULL;
+
     for (size_t i = 0; i < 32; i++) {
         result->digits[i] = a & 1;
         a >>= 1;
@@ -149,8 +158,8 @@ int f_print(cf_t a) {
     if (a == NULL) return -1;
 
     cfq_t fq = a->fq;
-    for (int32_t i = fq->n - 1; i >= 0; i--) {
-        printf("%dx^%d", a->digits[i], i);
+    for (ssize_t i = fq->n - 1; i >= 0; i--) {
+        printf("%dx^%ld", a->digits[i], i);
         if (i != 0) printf(" + ");
     }
     printf("\n");
@@ -163,10 +172,7 @@ int f_eq(cf_t a, cf_t b) {
     if (b == NULL) return 0;
     if (!f_same_fq(a, b)) return 0;
 
-    cfq_t fq = a->fq;
-    for (size_t i = 0; i < fq->n; i++)
-        if (a->digits[i] != b->digits[i]) return 0;
-    return 1;
+    return memcmp(a->digits, b->digits, a->fq->n) == 0;
 }
 
 f_t f_add(cf_t a, cf_t b) {
@@ -191,10 +197,6 @@ f_t f_sub(cf_t a, cf_t b) {
     f_t b_neg = f_neg(b);
     if (b_neg == NULL) return NULL;
     f_t result = f_add(a, b_neg);
-    if (result == NULL) {
-        destroy_f(b_neg);
-        return NULL;
-    }
     destroy_f(b_neg);
 
     return result;
@@ -209,6 +211,7 @@ f_t f_neg(cf_t a) {
 
     for (size_t i = 0; i < fq->n; i++) {
         result->digits[i] = (fq->ch - a->digits[i]) % fq->ch;
+        if (result->digits[i] == fq->ch) result->digits[i] = 0;
     }
 
     return result;
@@ -236,16 +239,16 @@ f_t f_mul(cf_t a, cf_t b) {
         }
     }
 
-    for (int32_t i = fq->n - 2; i >= 0; i--) {
+    for (ssize_t i = fq->n - 2; i >= 0; i--) {
         int8_t mul = digits[fq->n + i];
-        for (int32_t j = fq->n; j >= 0; j--) {
+        for (ssize_t j = fq->n; j >= 0; j--) {
             int32_t digitn = (digits[i + j] - fq->p[j] * mul) % fq->ch;
             digits[i + j] = digitn >= 0 ? digitn : digitn + fq->ch;
         }
     }
 
-    free(result->digits);
-    result->digits = realloc(digits, fq->n * sizeof(uint8_t));
+    memcpy(result->digits, digits, fq->n * sizeof(*(result->digits)));
+    free(digits);
 
     return result;
 }
@@ -267,8 +270,12 @@ static uint64_t uint_pow(uint64_t base, uint64_t exp) {
 static f_t f_pow(cf_t a, uint64_t exp) {
     cfq_t fq = a->fq;
     f_t result = fq_get_identity(fq);
-    f_t base = f_copy(a);
     if (result == NULL) return NULL;
+    f_t base = f_copy(a);
+    if (base == NULL) {
+        destroy_f(result);
+        return NULL;
+    }
 
     while (exp) {
         if (exp % 2 == 1) {
@@ -312,10 +319,6 @@ f_t f_div(cf_t a, cf_t b) {
     f_t b_inv = f_inv(b);
     if (b_inv == NULL) return NULL;
     f_t result = f_mul(a, b_inv);
-    if (result == NULL) {
-        destroy_f(b_inv);
-        return NULL;
-    }
     destroy_f(b_inv);
 
     return result;
