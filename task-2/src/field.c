@@ -211,7 +211,6 @@ f_t f_neg(cf_t a) {
 
     for (size_t i = 0; i < fq->n; i++) {
         result->digits[i] = (fq->ch - a->digits[i]) % fq->ch;
-        if (result->digits[i] == fq->ch) result->digits[i] = 0;
     }
 
     return result;
