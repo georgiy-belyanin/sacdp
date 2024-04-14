@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define abs(a) (((a) >= 0) ? (a) : -(a))
+
 static void fatal(const char *msg) {
     printf("Fatal error: %s\n", msg);
     exit(-1);
@@ -16,7 +19,7 @@ static void usage(void) {
 struct vec {
     size_t size;
     size_t length;
-    int8_t *data;
+    int16_t *data;
 };
 typedef struct vec *vec_t;
 typedef struct vec const *cvec_t;
@@ -64,19 +67,19 @@ static void vec_resize(vec_t vec, size_t size) {
     vec->length = size < vec->length ? size : vec->length;
 }
 
-static void vec_push(vec_t vec, int8_t element) {
+static void vec_push(vec_t vec, int16_t element) {
     if (vec->length >= vec->size)
         vec_resize(vec, vec->size + 3);
     vec->data[vec->length++] = element;
 }
 static void vec_erase(vec_t vec, size_t i) {
     if (vec == NULL) return;
-    int8_t last = vec->data[vec->length - 1];
+    int16_t last = vec->data[vec->length - 1];
     vec->data[i] = last;
     vec->length--;
     vec_resize(vec, vec->size - 1);
 }
-static void vec_remove(vec_t vec, int8_t value) {
+static void vec_remove(vec_t vec, int16_t value) {
     if (vec == NULL) return;
     for (size_t i = 0; i < vec->length; i++)
         if (vec->data[i] == value) {
@@ -84,10 +87,10 @@ static void vec_remove(vec_t vec, int8_t value) {
             return;
         }
 }
-static int8_t vec_get(cvec_t vec, size_t i) {
+static int16_t vec_get(cvec_t vec, size_t i) {
     return vec->data[i];
 }
-static bool vec_contains(cvec_t vec, int8_t value) {
+static bool vec_contains(cvec_t vec, int16_t value) {
     if (vec == NULL) return false;
     for (size_t i = 0; i < vec->length; i++)
         if (vec->data[i] == value) return true;
@@ -111,6 +114,17 @@ cnf_t cnf_copy(cnf_t another_cnf, size_t clauses) {
         cnf[clause] = vec_copy(another_cnf[clause]);
     return cnf;
 }
+void cnf_print(cnf_t cnf, size_t clauses) {
+    printf("c ");
+    for (size_t clause = 0; clause < clauses; clause++) {
+        if (cnf[clause] == NULL) continue;
+        printf("( ");
+        for (size_t var = 0; var < cnf[clause]->length; var++)
+            printf("%d ", vec_get(cnf[clause], var));
+        printf(")");
+    }
+    printf("\n");
+}
 
 void destroy_cnf(cnf_t cnf, size_t clauses) {
     if (cnf == NULL) return;
@@ -119,7 +133,7 @@ void destroy_cnf(cnf_t cnf, size_t clauses) {
     free(cnf);
 }
 
-typedef int8_t *valuation_t;
+typedef int16_t *valuation_t;
 
 static valuation_t create_valuation(size_t vars) {
     valuation_t valuation = calloc(vars + 1, sizeof(*valuation));
@@ -141,9 +155,17 @@ static valuation_t valuation_copy(valuation_t another_valuation, size_t vars) {
     memcpy(valuation, another_valuation, sizeof(*valuation) * (vars + 1));
     return valuation;
 }
+static void valuation_print(valuation_t valuation, size_t vars) {
+    printf("v ( ");
+    for (size_t var = 1; var <= vars; var++)
+        printf("%d ", valuation[var]);
+    printf(")\n");
+}
 
-static valuation_t dpll(cnf_t cnf, size_t clauses, int8_t *valuation, size_t vars) {
-    bool sat = true;
+static cnf_t prev_cnf;
+static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t vars) {
+    bool fuck = true;
+
     bool empty = true;
     for (size_t clause = 0; clause < clauses; clause++)
         if (cnf[clause] != NULL) empty = false;
@@ -159,43 +181,77 @@ static valuation_t dpll(cnf_t cnf, size_t clauses, int8_t *valuation, size_t var
 
     // Unit propagation
 
+    for (size_t clause = 0; clause < clauses; clause++) {
+        if (cnf[clause] == NULL || cnf[clause]->length != 1) continue;
+
+        int16_t var = vec_get(cnf[clause], 0);
+
+        valuation[abs(var)] = var > 0 ? 1 : -1;
+        for (size_t clause1 = 0; clause1 < clauses; clause1++) {
+            if (vec_contains(cnf[clause1], var)) {
+                destroy_vec(cnf[clause1]);
+                cnf[clause1] = NULL;
+            }
+            vec_remove(cnf[clause1], -var);
+        }
+    }
+
     // Pure literal
+
+    empty = true;
+    for (size_t clause = 0; clause < clauses; clause++)
+        if (cnf[clause] != NULL) empty = false;
+    if (empty) {
+        return valuation;
+    }
+
+    for (size_t clause = 0; clause < clauses; clause++) {
+        if (cnf[clause] != NULL && cnf[clause]->length == 0) {
+            return NULL;
+        }
+    }
 
     // New variable
     size_t var = 0;
-    while (valuation[++var] != 0 && var < vars);
+    while (var <= vars && valuation[++var] != 0);
 
     cnf_t new_cnf = cnf_copy(cnf, clauses);
-    valuation[var] = 1;
+    valuation_t new_valuation = valuation_copy(valuation, vars);
+    new_valuation[var] = 1;
 
     for (size_t clause = 0; clause < clauses; clause++) {
         if (vec_contains(new_cnf[clause], var)) {
             destroy_vec(new_cnf[clause]);
             new_cnf[clause] = NULL;
-        } else if (vec_contains(new_cnf[clause], -var))
+        } else {
             vec_remove(new_cnf[clause], -var);
+        }
     }
 
-    valuation_t res = dpll(new_cnf, clauses, valuation, vars);
+    valuation_t res = dpll(new_cnf, clauses, new_valuation, vars);
     destroy_cnf(new_cnf, clauses);
+    destroy_valuation(new_valuation);
     if (res != NULL) return res;
 
+    new_valuation = valuation_copy(valuation, vars);
     new_cnf = cnf_copy(cnf, clauses);
-    valuation[var] = -1;
+    new_valuation[var] = -1;
 
     for (size_t clause = 0; clause < clauses; clause++) {
         if (vec_contains(new_cnf[clause], -var)) {
             destroy_vec(new_cnf[clause]);
             new_cnf[clause] = NULL;
-        } else if (vec_contains(new_cnf[clause], var))
+        } else {
             vec_remove(new_cnf[clause], var);
+        }
     }
 
-    res = dpll(new_cnf, clauses, valuation, vars);
+    res = dpll(new_cnf, clauses, new_valuation, vars);
 
+    destroy_valuation(new_valuation);
     destroy_cnf(new_cnf, clauses);
     if (res != NULL) return res;
-    valuation[var] = 0;
+    //valuation[var] = 0;
 
     return NULL;
 }
@@ -227,8 +283,8 @@ cnf_t read_dimacs(const char *path, size_t *out_clauses, size_t *out_vars) {
     cnf_t cnf = create_cnf(clauses);
     vec_t clause = create_vec(3);
     size_t i = 0;
-    int8_t var = 0;
-    while (fscanf(f, "%hhd", &var) != 0 && i < clauses) {
+    int16_t var = 0;
+    while (fscanf(f, "%hd", &var) != 0 && i < clauses) {
         if (var == 0) {
             cnf[i] = clause;
             i++;
@@ -262,6 +318,7 @@ int main(int argc, char **argv) {
         printf("SATISFIABLE\n");
         for (int32_t var = 1; var <= vars; var++)
             printf("%d ", result[var] >= 0 ? var : -var);
+        printf("\n");
     } else {
         printf("UNSAT\n");
     }
