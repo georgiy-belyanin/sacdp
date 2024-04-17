@@ -177,8 +177,6 @@ static void valuation_print(valuation_t valuation, size_t vars) {
 
 static cnf_t prev_cnf;
 static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t vars) {
-    bool fuck = true;
-
     bool empty = true;
     for (size_t clause = 0; clause < clauses; clause++)
         if (cnf[clause] != NULL) empty = false;
