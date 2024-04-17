@@ -126,6 +126,16 @@ void cnf_print(cnf_t cnf, size_t clauses) {
     printf("\n");
 }
 
+void cnf_assign(cnf_t cnf, size_t clauses, int16_t var) {
+    for (size_t clause = 0; clause < clauses; clause++) {
+        if (vec_contains(cnf[clause], var)) {
+            destroy_vec(cnf[clause]);
+            cnf[clause] = NULL;
+        }
+        vec_remove(cnf[clause], -var);
+    }
+}
+
 void destroy_cnf(cnf_t cnf, size_t clauses) {
     if (cnf == NULL) return;
     for (size_t clause = 0; clause < clauses; clause++)
@@ -154,6 +164,9 @@ static valuation_t valuation_copy(valuation_t another_valuation, size_t vars) {
         fatal("No memory left");
     memcpy(valuation, another_valuation, sizeof(*valuation) * (vars + 1));
     return valuation;
+}
+static void valuation_assign(valuation_t valuation, int16_t var) {
+    valuation[abs(var)] = var > 0 ? 1 : -1;
 }
 static void valuation_print(valuation_t valuation, size_t vars) {
     printf("v ( ");
@@ -186,71 +199,67 @@ static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t va
 
         int16_t var = vec_get(cnf[clause], 0);
 
-        valuation[abs(var)] = var > 0 ? 1 : -1;
-        for (size_t clause1 = 0; clause1 < clauses; clause1++) {
-            if (vec_contains(cnf[clause1], var)) {
-                destroy_vec(cnf[clause1]);
-                cnf[clause1] = NULL;
-            }
-            vec_remove(cnf[clause1], -var);
-        }
+        valuation_assign(valuation, var);
+        cnf_assign(cnf, clauses, var);
     }
 
     // Pure literal
-
-    empty = true;
-    for (size_t clause = 0; clause < clauses; clause++)
-        if (cnf[clause] != NULL) empty = false;
-    if (empty) {
-        return valuation;
-    }
-
-    for (size_t clause = 0; clause < clauses; clause++) {
-        if (cnf[clause] != NULL && cnf[clause]->length == 0) {
-            return NULL;
+    for (size_t var = 1; var < vars; var++) {
+        if (valuation[var]) continue;
+        int8_t pure = 0;
+        for (size_t clause = 0; clause < clauses; clause++) {
+            if (vec_contains(cnf[clause], var)) {
+                if (pure == 0) pure = 1;
+                else if (pure == -1) {
+                    pure = 0;
+                    break;
+                }
+            } else if (vec_contains(cnf[clause], -var)) {
+                if (pure == 0) pure = -1;
+                else if (pure == 1) {
+                    pure = 0;
+                    break;
+                }
+            }
+        }
+        if (pure) {
+            valuation_assign(valuation, var * pure);
+            cnf_assign(cnf, clauses, var * pure);
         }
     }
 
     // New variable
     size_t var = 0;
-    while (var <= vars && valuation[++var] != 0);
+    while (var < vars && valuation[++var] != 0);
+    if (var == vars && valuation[var]) var = 0;
 
     cnf_t new_cnf = cnf_copy(cnf, clauses);
     valuation_t new_valuation = valuation_copy(valuation, vars);
-    new_valuation[var] = 1;
 
-    for (size_t clause = 0; clause < clauses; clause++) {
-        if (vec_contains(new_cnf[clause], var)) {
-            destroy_vec(new_cnf[clause]);
-            new_cnf[clause] = NULL;
-        } else {
-            vec_remove(new_cnf[clause], -var);
-        }
-    }
+    valuation_assign(new_valuation, var);
+    cnf_assign(new_cnf, clauses, var);
 
     valuation_t res = dpll(new_cnf, clauses, new_valuation, vars);
     destroy_cnf(new_cnf, clauses);
+    if (res != NULL) {
+        if (res != new_valuation) destroy_valuation(new_valuation);
+        return res;
+    }
     destroy_valuation(new_valuation);
-    if (res != NULL) return res;
 
     new_valuation = valuation_copy(valuation, vars);
     new_cnf = cnf_copy(cnf, clauses);
-    new_valuation[var] = -1;
 
-    for (size_t clause = 0; clause < clauses; clause++) {
-        if (vec_contains(new_cnf[clause], -var)) {
-            destroy_vec(new_cnf[clause]);
-            new_cnf[clause] = NULL;
-        } else {
-            vec_remove(new_cnf[clause], var);
-        }
-    }
+    valuation_assign(new_valuation, -var);
+    cnf_assign(new_cnf, clauses, -var);
 
     res = dpll(new_cnf, clauses, new_valuation, vars);
-
-    destroy_valuation(new_valuation);
     destroy_cnf(new_cnf, clauses);
-    if (res != NULL) return res;
+    if (res != NULL) {
+        if (res != new_valuation) destroy_valuation(new_valuation);
+        return res;
+    }
+    destroy_valuation(new_valuation);
     //valuation[var] = 0;
 
     return NULL;
@@ -270,10 +279,14 @@ cnf_t read_dimacs(const char *path, size_t *out_clauses, size_t *out_vars) {
         if (sym == 'c') fgets(line, sizeof(line), f);
         else if (sym == 'p') {
             fscanf(f, "%s", line);
-            if (strcmp(line, "cnf"))
+            if (strcmp(line, "cnf")) {
+                fclose(f);
                 fatal("Error reading DIMACS header: no cnf signature");
-            if (fscanf(f, "%ld %ld", &vars, &clauses) != 2)
+            }
+            if (fscanf(f, "%ld %ld", &vars, &clauses) != 2) {
+                fclose(f);
                 fatal("Error reading DIMACS header: clauses and vars not found");
+            }
             break;
         }
     }
@@ -295,13 +308,17 @@ cnf_t read_dimacs(const char *path, size_t *out_clauses, size_t *out_vars) {
         }
     }
 
-    if (vars < 0 || clauses < 0)
+    if (vars < 0 || clauses < 0) {
+        fclose(f);
         fatal("Error reading DIMACS header");
+    }
 
     if (out_clauses != NULL)
         *out_clauses = clauses;
     if (out_vars != NULL)
         *out_vars = vars;
+
+    fclose(f);
 
     return cnf;
 }
@@ -315,13 +332,14 @@ int main(int argc, char **argv) {
     valuation_t valuation = create_valuation(vars);
     valuation_t result = dpll(cnf, clauses, valuation, vars);
     if (result != NULL) {
-        printf("SATISFIABLE\n");
+        printf("s SATISFIABLE\nv ");
         for (int32_t var = 1; var <= vars; var++)
             printf("%d ", result[var] >= 0 ? var : -var);
         printf("\n");
     } else {
-        printf("UNSAT\n");
+        printf("s UNSATISFIABLE\n");
     }
+    destroy_valuation(result);
     destroy_valuation(valuation);
     destroy_cnf(cnf, clauses);
     return 0;
