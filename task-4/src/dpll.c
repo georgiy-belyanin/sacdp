@@ -260,7 +260,6 @@ static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t va
         return res;
     }
     destroy_valuation(new_valuation);
-    //valuation[var] = 0;
 
     return NULL;
 }
