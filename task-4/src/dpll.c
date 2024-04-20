@@ -192,13 +192,18 @@ static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t va
 
     // Unit propagation
 
-    for (size_t clause = 0; clause < clauses; clause++) {
-        if (cnf[clause] == NULL || cnf[clause]->length != 1) continue;
+    while (true) {
+        bool found_unit = false;
+        for (size_t clause = 0; clause < clauses; clause++) {
+            if (cnf[clause] == NULL || cnf[clause]->length != 1) continue;
+            found_unit = true;
 
-        int16_t var = vec_get(cnf[clause], 0);
+            int16_t var = vec_get(cnf[clause], 0);
 
-        valuation_assign(valuation, var);
-        cnf_assign(cnf, clauses, var);
+            valuation_assign(valuation, var);
+            cnf_assign(cnf, clauses, var);
+        }
+        if (!found_unit) break;
     }
 
     // Pure literal
@@ -245,19 +250,13 @@ static valuation_t dpll(cnf_t cnf, size_t clauses, int16_t *valuation, size_t va
     }
     destroy_valuation(new_valuation);
 
-    new_valuation = valuation_copy(valuation, vars);
-    new_cnf = cnf_copy(cnf, clauses);
+    valuation_assign(valuation, -var);
+    cnf_assign(cnf, clauses, -var);
 
-    valuation_assign(new_valuation, -var);
-    cnf_assign(new_cnf, clauses, -var);
-
-    res = dpll(new_cnf, clauses, new_valuation, vars);
-    destroy_cnf(new_cnf, clauses);
+    res = dpll(cnf, clauses, valuation, vars);
     if (res != NULL) {
-        if (res != new_valuation) destroy_valuation(new_valuation);
         return res;
     }
-    destroy_valuation(new_valuation);
 
     return NULL;
 }
