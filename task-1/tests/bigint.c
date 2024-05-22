@@ -177,13 +177,13 @@ TEST(bigint, div) {
     char *ms = dec_to_string(m);
 
     check(!strcmp(fs, "0"));
-    check(!strcmp(gs, "-123456789123456789123456787"));
+    check(!strcmp(gs, "1"));
     check(!strcmp(hs, "27000000027000000030"));
-    check(!strcmp(is, "-27000000027000000057"));
+    check(!strcmp(is, "123456762123456762123456731"));
     check(!strcmp(js, "1"));
-    check(!strcmp(ks, "-2"));
+    check(!strcmp(ks, "-1"));
     check(!strcmp(ls, "27"));
-    check(!strcmp(ms, "27"));
+    check(!strcmp(ms, "28"));
 
     destroy_dec(a);
     destroy_dec(b);

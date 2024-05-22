@@ -37,7 +37,7 @@ void destroy_dec(dec_t a) {
 }
 
 static int dec_truncate(dec_t a) {
-    if (a == NULL)    
+    if (a == NULL)
         return -EINVAL;
 
     size_t leading_zeros = 0;
@@ -94,7 +94,7 @@ dec_t dec_from_string(const char* s) {
 
     for (size_t i = 0; i < len - negative; i++)
         result->digits[i] = s[len - i - 1] - '0';
-    
+
     dec_truncate(result);
     return result;
 }
@@ -295,8 +295,7 @@ dec_t dec_div(cdec_t a, cdec_t b, dec_t* rem) {
         destroy_dec(tmp);
     }
 
-    if (a->sign != b->sign && !(ac->length == 1 && ac->digits[0] == 0)) {
-        ac->sign = MINUS;
+    if (a->sign == MINUS && b->sign == MINUS && !(ac->length == 1 && ac->digits[0] == 0)) {
         dec_t bc = dec_copy(b);
         if (bc == NULL) {
             destroy_dec(ac);
@@ -305,7 +304,7 @@ dec_t dec_div(cdec_t a, cdec_t b, dec_t* rem) {
         }
         bc->sign = PLUS;
 
-        dec_t acn = dec_add(bc, ac);
+        dec_t acn = dec_sub(bc, ac);
         if (acn == NULL) {
             destroy_dec(ac);
             destroy_dec(bc);
@@ -330,7 +329,7 @@ dec_t dec_div(cdec_t a, cdec_t b, dec_t* rem) {
         destroy_dec(unit);
     }
     result->sign = dec_sign_mul(a->sign, b->sign);
-    ac->sign = b->sign;
+    ac->sign = PLUS;
     if (rem != NULL)
         *rem = ac;
     else
