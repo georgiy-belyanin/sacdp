@@ -132,6 +132,7 @@ static void block_cleanup(void) {
     while (aes_block != NULL) {
         aes_block = head->next;
         kfree(head);
+        head = aes_block;
     }
 }
 
