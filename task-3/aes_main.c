@@ -251,7 +251,7 @@ int init_module(void) {
     aes_major = MAJOR(dev);
     printk(KERN_DEBUG "AES device major number is: %d\n", aes_major);
 
-    if (IS_ERR(aesdev_class = class_create(THIS_MODULE, "aes"))) {
+    if (IS_ERR(aesdev_class = class_create("aes"))) {
         result = PTR_ERR(aesdev_class);
         goto cleanup_1;
     }
