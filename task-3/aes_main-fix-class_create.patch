@@ -1,0 +1,13 @@
+diff --git a/task-3/aes_main.c b/task-3/aes_main.c
+index 016d2c4..87c509e 100644
+--- a/task-3/aes_main.c
++++ b/task-3/aes_main.c
+@@ -191,7 +191,7 @@ int init_module(void) {
+ 
+     cdev_major = MAJOR(dev);
+     printk(KERN_DEBUG "AES device major number is: %d\n", cdev_major);
+-    if (IS_ERR(aesdev_class = class_create(THIS_MODULE, "aes"))) {
++    if (IS_ERR(aesdev_class = class_create("aes"))) {
+         result = PTR_ERR(aesdev_class);
+         goto cleanup_1;
+     }
