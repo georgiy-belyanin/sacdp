@@ -62,17 +62,14 @@ static int dec_extend(dec_t a, size_t n) {
     a->digits = realloc(a->digits, a->length + n);
     if (a->digits == NULL)
         return -ENOMEM;
-    for (size_t i = a->length; i < a->length + n; i++)
-        a->digits[i] = 0;
-
+    memset(a->digits + a->length, 0, n);
     a->length += n;
 
     return 0;
 }
 dec_t dec_copy(cdec_t a) {
     dec_t result = create_dec(a->length, a->sign);
-    for (size_t i = 0; i < a->length; i++)
-        result->digits[i] = a->digits[i];
+    memcpy(result->digits, a->digits, a->length);
     return result;
 }
 
