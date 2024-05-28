@@ -153,19 +153,25 @@ TEST(bigint, mul) {
     return 0;
 }
 TEST(bigint, div) {
-    dec_t a = dec_from_string("123456789123456789123456789");
-    dec_t b = dec_from_string("-123456789123456789123456788");
-    dec_t c = dec_from_string("3333333333333333333333333333");
-    dec_t d = dec_from_string("-3333333333333333333333333333");
-    dec_t e = dec_from_string("27");
+    dec_t a = dec_from_string("17");
+    dec_t b = dec_from_string("-6");
+    dec_t c = dec_from_string("5");
+    dec_t d = dec_from_string("24");
+    dec_t e = dec_from_string("-29");
     dec_t f;
     dec_t g;
     dec_t h;
     dec_t i;
-    dec_t j = dec_div(a, a, &f);
-    dec_t k = dec_div(a, b, &g);
-    dec_t l = dec_div(c, a, &h);
-    dec_t m = dec_div(d, b, &i);
+    dec_t f1;
+    dec_t g1;
+
+    dec_t j = dec_div(a, b, &f);
+    dec_t k = dec_div(b, c, &g);
+    dec_t l = dec_div(e, b, &h);
+    dec_t m = dec_div(d, c, &i);
+
+    dec_t j1 = dec_div(a, a, &f1);
+    dec_t k1 = dec_div(b, b, &g1);
 
     char *fs = dec_to_string(f);
     char *gs = dec_to_string(g);
@@ -176,14 +182,29 @@ TEST(bigint, div) {
     char *ls = dec_to_string(l);
     char *ms = dec_to_string(m);
 
-    check(!strcmp(fs, "0"));
-    check(!strcmp(gs, "1"));
-    check(!strcmp(hs, "27000000027000000030"));
-    check(!strcmp(is, "123456762123456762123456731"));
-    check(!strcmp(js, "1"));
-    check(!strcmp(ks, "-1"));
-    check(!strcmp(ls, "27"));
-    check(!strcmp(ms, "28"));
+    char *f1s = dec_to_string(f1);
+    char *g1s = dec_to_string(g1);
+
+    char *j1s = dec_to_string(j1);
+    char *k1s = dec_to_string(k1);
+
+    check(!strcmp(js, "-2"));
+    check(!strcmp(fs, "5"));
+
+    check(!strcmp(ks, "-2"));
+    check(!strcmp(gs, "4"));
+
+    check(!strcmp(ls, "5"));
+    check(!strcmp(hs, "1"));
+
+    check(!strcmp(ms, "4"));
+    check(!strcmp(is, "4"));
+
+    check(!strcmp(j1s, "1"));
+    check(!strcmp(f1s, "0"));
+
+    check(!strcmp(k1s, "1"));
+    check(!strcmp(g1s, "0"));
 
     destroy_dec(a);
     destroy_dec(b);
@@ -198,6 +219,13 @@ TEST(bigint, div) {
     destroy_dec(k);
     destroy_dec(l);
     destroy_dec(m);
+
+    destroy_dec(f1);
+    destroy_dec(g1);
+
+    destroy_dec(j1);
+    destroy_dec(k1);
+
     free(fs);
     free(gs);
     free(hs);
@@ -206,6 +234,12 @@ TEST(bigint, div) {
     free(ks);
     free(ls);
     free(ms);
+
+    free(f1s);
+    free(g1s);
+
+    free(j1s);
+    free(k1s);
 
     return 0;
 }

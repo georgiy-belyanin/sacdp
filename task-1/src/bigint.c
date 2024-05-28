@@ -143,43 +143,38 @@ dec_t dec_add(cdec_t a, cdec_t b) {
     if (a == NULL || b == NULL)
         return NULL;
 
+    if (a->sign != b->sign) {
+        if (a->sign != PLUS) {
+            cdec_t tmp = a;
+            a = b;
+            b = tmp;
+        }
+        dec_t neg_b = dec_copy(b);
+        neg_b->sign = 1 - b->sign;
+        dec_t result = dec_sub(a, neg_b);
+        destroy_dec(neg_b);
+        return result;
+    }
+
     size_t max_length = max(a->length, b->length);
     dec_t result = create_dec(max_length, a->sign);
 
     if (result == NULL)
         return NULL;
 
-    if (a->sign != b->sign) {
-        for (size_t i = 0; i < max_length; i++) {
-            int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
-            int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
+    result->sign = a->sign;
+    for (size_t i = 0; i < max_length; i++) {
+        int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
+        int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
 
-            result->digits[i] += a_digit - b_digit;
-            if (result->digits[i] < 0) {
-                result->digits[i] += 10;
+        result->digits[i] += a_digit + b_digit;
+        if (result->digits[i] >= BASE) {
+            result->digits[i] %= BASE;
 
-                if (i != max_length - 1)
-                    result->digits[i+1]--;
-                else
-                    result->sign = 1 - result->sign;
-            }
-        }
-        dec_truncate(result);
-    } else {
-        result->sign = a->sign;
-        for (size_t i = 0; i < max_length; i++) {
-            int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
-            int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
-
-            result->digits[i] += a_digit + b_digit;
-            if (result->digits[i] >= BASE) {
-                result->digits[i] %= BASE;
-
-                if (i == max_length - 1)
-                    if (dec_extend(result, 1) < 0)
-                        return NULL;
-                result->digits[i+1]++;
-            }
+            if (i == max_length - 1)
+                if (dec_extend(result, 1) < 0)
+                    return NULL;
+            result->digits[i+1]++;
         }
     }
 
@@ -190,14 +185,45 @@ dec_t dec_sub(cdec_t a, cdec_t b) {
     if (a == NULL || b == NULL)
         return NULL;
 
-    dec_t neg_b = dec_copy(b);
-    neg_b->sign = 1 - neg_b->sign;
+    if (a->sign != b->sign) {
+        dec_t neg_b = dec_copy(b);
+        neg_b->sign = 1 - b->sign;
+        dec_t result = dec_add(a, neg_b);
+        destroy_dec(neg_b);
+        return result;
+    }
 
-    dec_t result = dec_add(a, neg_b);
+    size_t max_length = max(a->length, b->length);
+    dec_t result = create_dec(max_length, a->sign);
     if (result == NULL)
         return NULL;
 
-    destroy_dec(neg_b);
+    if (a->sign == PLUS && dec_cmp(a, b) == -1 ||
+        a->sign == MINUS && dec_cmp(a, b) == 1) {
+        result->sign = 1 - result->sign;
+        cdec_t tmp = a;
+        a = b;
+        b = tmp;
+    }
+
+    for (size_t i = 0; i < max_length; i++) {
+        int8_t a_digit = (i < a->length) ? a->digits[i] : 0;
+        int8_t b_digit = (i < b->length) ? b->digits[i] : 0;
+
+        result->digits[i] += a_digit - b_digit;
+
+        if (result->digits[i] < 0) {
+            result->digits[i] += 10;
+
+            if (i != max_length - 1)
+                result->digits[i+1]--;
+            else
+                result->sign = 1 - result->sign;
+        }
+    }
+
+    dec_truncate(result);
+
     return result;
 }
 
@@ -268,63 +294,45 @@ dec_t dec_div(cdec_t a, cdec_t b, dec_t* rem) {
         return NULL;
 
     size_t length = a->length - b->length + 2;
+
     dec_t result = create_dec(length, PLUS);
     if (result == NULL)
         return NULL;
+
     dec_t ac = dec_copy(a);
-    ac->sign = PLUS;
     if (ac == NULL) {
         destroy_dec(result);
         return NULL;
     }
-
     for (int32_t i = a->length - b->length; i >= 0; i--) {
         dec_t tmp = dec_shift(b, i);
-        tmp->sign = PLUS;
+        dec_t tmp2 = dec_copy(tmp);
+        tmp2->sign = a->sign;
 
-        while (dec_cmp(ac, tmp) != -1) {
-            dec_t an = dec_sub(ac, tmp);
+        while (a->sign == PLUS ?
+            dec_cmp(ac, tmp2) >= 0 :
+            dec_cmp(ac, tmp2) < 0) {
+            dec_t an;
+            an = (dec_sign_mul(a->sign, b->sign) == PLUS) ? dec_sub(ac, tmp) : dec_add(ac, tmp);
             destroy_dec(ac);
             ac = an;
             result->digits[i]++;
         }
 
+        destroy_dec(tmp2);
         destroy_dec(tmp);
     }
 
-    if (a->sign == MINUS && b->sign == MINUS && !(ac->length == 1 && ac->digits[0] == 0)) {
-        dec_t bc = dec_copy(b);
-        if (bc == NULL) {
-            destroy_dec(ac);
-            destroy_dec(result);
-            return NULL;
-        }
-        bc->sign = PLUS;
-
-        dec_t acn = dec_sub(bc, ac);
-        if (acn == NULL) {
-            destroy_dec(ac);
-            destroy_dec(bc);
-            destroy_dec(result);
-            return NULL;
-        }
-
+    dec_t zero = dec_from_int(0);
+    if (a->sign == MINUS && dec_cmp(ac, zero) <= 0) {
+        dec_t an;
+        an = (b->sign == PLUS) ? dec_add(ac, b) : dec_sub(ac, b);
         destroy_dec(ac);
-        destroy_dec(bc);
-        ac = acn;
-
-        dec_t unit = dec_from_int(1);
-        dec_t resultn = dec_add(result, unit);
-        if (resultn == NULL) {
-            destroy_dec(ac);
-            destroy_dec(result);
-            return NULL;
-        }
-        destroy_dec(result);
-        result = resultn;
-
-        destroy_dec(unit);
+        ac = an;
+        result->digits[0]++;
     }
+    destroy_dec(zero);
+
     result->sign = dec_sign_mul(a->sign, b->sign);
     ac->sign = PLUS;
     if (rem != NULL)
